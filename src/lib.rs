@@ -2,8 +2,8 @@ use proc_macro::TokenStream;
 use quote::quote;
 use syn::{Data::Struct, DataStruct, DeriveInput, Fields, FieldsNamed, parse_macro_input};
 
-#[proc_macro_derive(Data)]
-pub fn visible(item: TokenStream) -> TokenStream {
+#[proc_macro_attribute]
+pub fn visible(_attr: TokenStream, item: TokenStream) -> TokenStream {
     let ast = parse_macro_input!(item as DeriveInput);
     let name = ast.ident;
 
