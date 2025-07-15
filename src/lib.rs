@@ -1,31 +1,24 @@
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{Data::Struct, DataStruct, DeriveInput, Fields, FieldsNamed, parse_macro_input};
+use syn::{Fields, FieldsNamed, FieldsUnnamed, ItemStruct, parse_macro_input, parse_quote};
 
 #[proc_macro_attribute]
 pub fn visible(_attr: TokenStream, item: TokenStream) -> TokenStream {
-    let ast = parse_macro_input!(item as DeriveInput);
-    let name = ast.ident;
+    let mut input = parse_macro_input!(item as ItemStruct);
 
-    let fields = match ast.data {
-        Struct(DataStruct {
-            fields: Fields::Named(FieldsNamed { ref named, .. }),
-            ..
-        }) => named,
-        _ => unimplemented!("only works for structs with named fields"),
-    };
-
-    let builder_fields = fields.iter().map(|f| {
-        let name = &f.ident;
-        let ty = &f.ty;
-        quote! {pub #name: #ty}
-    });
-
-    let visible_version = quote! {
-        pub struct #name {
-            #(#builder_fields,)*
+    match &mut input.fields {
+        Fields::Named(FieldsNamed { named, .. }) => {
+            for field in named.iter_mut() {
+                field.vis = parse_quote!(pub);
+            }
         }
-    };
+        Fields::Unnamed(FieldsUnnamed { unnamed, .. }) => {
+            for field in unnamed.iter_mut() {
+                field.vis = parse_quote!(pub);
+            }
+        }
+        Fields::Unit => {}
+    }
 
-    visible_version.into()
+    TokenStream::from(quote! {#input})
 }
